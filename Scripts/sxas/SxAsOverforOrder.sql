@@ -28,7 +28,7 @@ begin
 		, sum(case when o2.artnr like '*%' then 1 else 0 end)  as stjarnrader
 		, sum(case when a.nummer is null then 1 else 0 end)  as saknadeartiklar
 		, sum(case when o2.lev < 0 then 1 else 0 end)  as kreditrader
-		, sum(case when a.getinnetto =0 then 1 else 0 end)  as saknarinprisrader
+		, sum(case when a.getinnetto <=0 then 1 else 0 end)  as saknarinprisrader
 		, max(kol.antalkolli) as antalkolli
 		, max(kol.viktkg) as viktkg
 		from
@@ -49,11 +49,18 @@ begin
 
 	insert into offert2 (offertnr, pos, prisnr, artnr, namn, levnr, best, rab, lev, text, pris, summa, konto, netto, enh)
 	select this_offertnr, row_number() over (), 1, o2.artnr, a.namn, a.lev, o2.lev, 0, o2.lev, ''
-	, round(case when a.getinnetto <= 0 then 
-		case when o2.pris >= 0 then 
-			o2.pris * (1-coalesce(o2.rab,0)/100) * valuta.kurs 
-			else utpris end 
-	else a.getinnetto + greatest(0,(o2.pris * (1-coalesce(o2.rab,0)/100) * valuta.kurs) - a.getinnetto) * 0.44 end::numeric ,2) as pristillas
+	, 	round(
+			case when a.getinnetto <= 0 then 
+				case when o2.pris >= 0 then 
+					o2.pris * (1-coalesce(o2.rab,0)/100) * valuta.kurs 
+				else 
+					utpris 
+				end 
+			else 
+				-- multiplikator för beh¨llning i ab
+				a.getinnetto + greatest(0,greatest(0,(o2.pris * (1-coalesce(o2.rab,0)/100) * valuta.kurs) - a.getinnetto)) * 0.44 
+			end::numeric 
+		,2) as pristillas
 	, 0, '', a.getinnetto, a.enhet
 	from
 	(select unnest(in_orderlista) as ordernr) olist 
