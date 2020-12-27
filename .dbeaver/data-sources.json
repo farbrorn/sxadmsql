@@ -4,7 +4,7 @@
 		"postgres-jdbc-176a0067573-7da9a196c61d7e17": {
 			"provider": "postgresql",
 			"driver": "postgres-jdbc",
-			"name": "sxadm",
+			"name": "Local SxFakt",
 			"save-password": true,
 			"show-system-objects": true,
 			"read-only": false,
@@ -29,6 +29,85 @@
 				"auth-model": "native",
 				"handlers": {}
 			}
+		},
+		"postgres-jdbc-176a32af0f8-2eb9cb3a00d35d3c": {
+			"provider": "postgresql",
+			"driver": "postgres-jdbc",
+			"name": "Local SxAsFakt",
+			"save-password": true,
+			"show-system-objects": true,
+			"read-only": false,
+			"configuration": {
+				"host": "localhost",
+				"port": "5432",
+				"database": "sxadm",
+				"url": "jdbc:postgresql://localhost:5432/sxadm",
+				"home": "postgresql-x64-9.6",
+				"type": "dev",
+				"properties": {
+					"connectTimeout": "20",
+					"loginTimeout": "20"
+				},
+				"provider-properties": {
+					"@dbeaver-show-non-default-db@": "false",
+					"@dbeaver-show-template-db@": "false",
+					"@dbeaver-show-unavailable-db@": "false",
+					"postgresql.dd.plain.string": "false",
+					"postgresql.dd.tag.string": "false"
+				},
+				"auth-model": "native",
+				"handlers": {}
+			}
+		},
+		"postgres-jdbc-176a32c1a66-5ebf9c9b403436ae": {
+			"provider": "postgresql",
+			"driver": "postgres-jdbc",
+			"name": "Remote SxFakt",
+			"save-password": true,
+			"show-system-objects": true,
+			"read-only": false,
+			"configuration": {
+				"host": "188.240.223.222",
+				"port": "5432",
+				"database": "sxadm",
+				"url": "jdbc:postgresql://188.240.223.222:5432/sxadm",
+				"home": "postgresql-x64-9.6",
+				"type": "prod",
+				"provider-properties": {
+					"@dbeaver-show-non-default-db@": "false",
+					"@dbeaver-show-template-db@": "false",
+					"@dbeaver-show-unavailable-db@": "false",
+					"postgresql.dd.plain.string": "false",
+					"postgresql.dd.tag.string": "false"
+				},
+				"auth-model": "native",
+				"handlers": {}
+			}
+		},
+		"postgres-jdbc-176a32e8c72-3f07461f7c6ee4ff": {
+			"provider": "postgresql",
+			"driver": "postgres-jdbc",
+			"name": "Remote SxAsFakt",
+			"save-password": true,
+			"show-system-objects": true,
+			"read-only": false,
+			"configuration": {
+				"host": "188.240.223.222",
+				"port": "5432",
+				"database": "sxadm",
+				"url": "jdbc:postgresql://188.240.223.222:5432/sxadm",
+				"home": "postgresql-x64-9.6",
+				"type": "prod",
+				"provider-properties": {
+					"@dbeaver-show-non-default-db@": "false",
+					"@dbeaver-show-template-db@": "false",
+					"@dbeaver-show-unavailable-db@": "false",
+					"postgresql.dd.plain.string": "false",
+					"postgresql.dd.tag.string": "false"
+				},
+				"auth-model": "native",
+				"handlers": {}
+			}
 		}
 	},
 	"connection-types": {
@@ -39,6 +118,14 @@
 			"auto-commit": true,
 			"confirm-execute": false,
 			"confirm-data-change": false
+		},
+		"prod": {
+			"name": "Production",
+			"color": "org.jkiss.dbeaver.color.connectionType.prod.background",
+			"description": "Production database",
+			"auto-commit": false,
+			"confirm-execute": true,
+			"confirm-data-change": true
 		}
 	}
 }
