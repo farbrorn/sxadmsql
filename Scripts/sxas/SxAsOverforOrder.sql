@@ -1,4 +1,6 @@
-CREATE OR REPLACE FUNCTION sxasOverforOrder2Offert(in_orderlista integer[], out offertnr integer, out out_viktkg integer, out out_kolli integer)  AS
+--drop FUNCTION sxasOverforOrder2Offert(in_orderlista integer[])
+
+CREATE OR REPLACE FUNCTION sxasOverforOrder2Offert(in_orderlista integer[], out out_offertnr integer, out out_viktkg integer, out out_antalkolli integer)  AS
 $BODY$
 declare
 	this_offertnr integer;
@@ -32,7 +34,7 @@ begin
 		, max(kol.antalkolli) as antalkolli
 		, max(kol.viktkg) as viktkg
 		from
-		(select unnest(array [1,21146,2]) as ordernr) olist 
+		(select unnest(in_orderlista) as ordernr) olist 
 		left outer join sxasfakt.order1 o1 on o1.ordernr=olist.ordernr 
 		left outer join sxasfakt.order2 o2 on o1.ordernr=o2.ordernr and trim(coalesce(o2.artnr,'')) <> ''
 		left outer join artikel a on a.nummer=o2.artnr
@@ -72,7 +74,9 @@ begin
 	
 	update offert2 set summa=round((lev*pris*(1-rab/100))::numeric,2) where offertnr=this_offertnr;
 
-	select this_offertnr as offertnr, this_viktkg as viktkg, this_antalkolli as antalkolli;
+	out_offertnr=this_offertnr;
+	out_viktkg = this_viktkg;
+	out_antalkolli=this_antalkolli;
 end;
 $BODY$
   LANGUAGE plpgsql VOLATILE SECURITY DEFINER
@@ -80,11 +84,12 @@ $BODY$
 
  
  
--- select sxasOverforOrder2Offert(array [13902, 13880])
+-- select * from sxasOverforOrder2Offert(array [13882])
 
+ --update sxasfakt.order1 set status='Samfak' where ordernr=13918
 --select * from offert2 where offertnr=24138
 
---select * from sxasfakt.order2 where ordernr in (13902, 13880)
+--select * from sxasfakt.order2 where ordernr in (13882, 13816, 10560, 10116)
 
 
 
