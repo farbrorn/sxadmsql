@@ -1,3 +1,4 @@
+--drop FUNCTION sxasOverforOrder2Offert(in_orderlista integer[])
 
 CREATE OR REPLACE FUNCTION sxasOverforOrder2Offert(in_orderlista integer[], out out_offertnr integer, out out_viktkg integer, out out_antalkolli integer)  AS
 $BODY$
@@ -83,3 +84,12 @@ $BODY$
 
  
  
+-- select * from sxasOverforOrder2Offert(array [13882])
+
+ --update sxasfakt.order1 set status='Samfak' where ordernr=13918
+--select * from offert2 where offertnr=24142
+
+--select * from sxasfakt.order2 where ordernr in (13882, 13816, 10560, 10116)
+
+
+
