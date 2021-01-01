@@ -15,8 +15,6 @@ declare
 	cn_lasta integer;
 	cn_faktor integer;
 	kund_ejfakturerbar integer;
-	kund_bonus integer;
-	kund_ranta integer;
 	kund_sarfaktura integer;
 	this_moms real; 
 	this_momsproc real; 
@@ -25,6 +23,8 @@ declare
 	temp_ordernr integer;
 	this_firstrun boolean;
 	this_tattbetala real;
+	this_isranta boolean:
+	this_isbonus boolean;
 begin
 	
 	IF array_length(in_orderlista,1)<1 THEN raise EXCEPTION 'Inga ordrar begärda. Antal %', array_length(in_orderlista,1); END IF; 
@@ -33,12 +33,12 @@ begin
 	
 	SELECT 		max(kundnr), count(DISTINCT kundnr), count(DISTINCT lagernr), count(distinct trim(left(saljare,30))), count(distinct bonus ), 
 				count(distinct ktid), count(distinct moms), COUNT(*), sum(case when wmslock is not null or lastdatum is not null then 1 else 0 end), count(distinct order1.faktor),
-				max(moms), max(lagernr)
+				max(moms), max(lagernr), case when max(bonus) = 1 then true else false end --bonus samla (2) ska inte tas med
 		INTO 	this_kundnr, cn_kundnr, cn_lagernr, cn_saljare, cn_bonus,
 				cn_ktid, cn_moms  , cn_ordercnt, cn_lasta , cn_faktor,
-				this_moms, this_lagernr
+				this_moms, this_lagernr, this_isbonus
 		FROM order1 WHERE ordernR = ANY(in_orderlista);
-	
+
 	
 	IF cn_kundnr > 1 THEN raise EXCEPTION 'Flera kundnummer (%) är blandat i orderlistan.', cn_lagernr; END IF; 
 	IF cn_lagernr > 1 THEN raise EXCEPTION 'Flera lagernummer (%) är blandat i orderlistan.', cn_lagernr; END IF; 
@@ -53,10 +53,8 @@ begin
 	if not exists (select 1 from kund where nummer=this_kundnr) then raise exception 'Kundnummer % saknas', this_kundnr; end if;
 
 
-	select ejfakturerbar, bonus, rantfakt , sarfaktura into kund_ejfakturerbar, kund_bonus, kund_ranta, kund_sarfaktura from kund where nummer=this_kundnr;
+	select ejfakturerbar, case when rantfakt > 0 then true else false , sarfaktura into kund_ejfakturerbar, this_isranta, kund_sarfaktura from kund where nummer=this_kundnr;
 	if (kund_ejfakturerbar <> 0 ) THEN raise EXCEPTION 'Kund % är inte fakturerbar', this_kundnr; END IF;
-	if (kund_bonus <> 0 ) THEN raise EXCEPTION 'Kund % har bonus som inte stöds just nu', this_kundnr; END IF;
-	if (kund_ranta <> 0 ) THEN raise EXCEPTION 'Kund % har ranta som inte stöds just nu', this_kundnr; END IF;
 	if (kund_sarfaktura <> 0 and array_length(in_orderlista,1)>1) THEN raise EXCEPTION 'Kund % har särfaktura. Anropa en gång per ordernr', this_kundnr; END IF;
 
 	select max(faktnr)+1 into this_faktnr from faktura1;
@@ -66,7 +64,7 @@ begin
 	--Orderrader till temp
 	create temporary table temprader (rad serial, artnr varchar, namn varchar, rab real, lev real, text varchar, pris real, summa real, 
 									konto varchar, netto real, enh varchar, bon_nr integer, ordernr integer, rantafakturanr integer, 
-									rantafalldatum date, rantabetaldatum date, rantabetalbelopp real, rantaproc real, stjid integer, momsfri boolean default false, levnr varchar)  on commit drop ;
+									rantafalldatum date, rantabetaldatum date, rantabetalbelopp real, rantaproc real, stjid integer, momsfri boolean default false, levnr varchar, bonusid integer, bonusfaktnr integer)  on commit drop ;
 								
 	this_firstrun=true;
 	foreach temp_ordernr in array in_orderlista loop
@@ -81,15 +79,22 @@ begin
 
 
 --add ränta
-
-
-
+if (this_isranta ) THEN
+	insert into temprader (ordernr, text) values (0, '')
+	insert into temprader (ordernr, momsfri, artnr, namn, rab, lev, pris, summa, konto, netto, enh, rantafakturanr, rantafalldatum, rantabetaldatum, rantabetalbelopp, rantaproc ) 
+		select 0, true, '*RÄNTA*', 'Faktura: ' || ranta.faktnr, 0, 1, ranta.ranta, ranta.ranta, fuppg.rantak , 0.01, '', ranta.faktnr , ranta.falldat , ranta.betdat , ranta.tot , ranta.rantaproc 
+		from ranta where kundnr=this_kundnr order by faktnr;
+end if;
 
 
 
 -- add bonus
-
-
+if (this_isbonus) then
+	insert into temprader (ordernr, text) values (0, '')
+	insert into temprader (ordernr, momsfri, artnr, namn, rab, lev, pris, summa, konto, netto, bonusid, bonusfaktnr ) 
+		select 0, true, '*BONUS*', 'Faktura: ' || bonus.faktura, 0, 1, -bonus.bonus , -bonus.bonus, '3011', 0.01, bonus.id, bonus.faktura 
+		from bonus where kund=this_kundnr order by faktura;
+end if;
 
 
 
@@ -163,7 +168,44 @@ begin
 			select rantfakt, faktnr, kundnr, namn, 0, datum, 'K', 0, 0, year(datum), month(datum), 0, 0 from faktura1 where faktnr=this_faktnr;
 	end if;
 
-	
+
+	--- Bokföringsorder
+	insert into bokord (konto, faktnr, typ, summa, kundnr, namn, datum, ar, man)
+	select 
+	case when k.konto = 'Orut'  then case when length(fuppg.orutk)> 0 then fuppg.orutk else k.konto end else '' end ||
+	case when k.konto = 'AttBetala'  then case when length(fuppg.kundfk)> 0 then fuppg.kundfk else k.konto end else '' end ||
+	case when k.konto = 'Moms 1'  then case when length(fuppg.moms1k)> 0 then fuppg.moms1k else k.konto end else '' end ||
+	case when k.konto = 'Moms 2'  then case when length(fuppg.moms2k)> 0 then fuppg.moms2k else k.konto end else '' end ||
+	case when k.konto = 'Moms 3'  then case when length(fuppg.moms3k)> 0 then fuppg.moms3k else k.konto end else '' end ,	
+	f1.faktnr as faktnr, 'F' as typ, 
+	round(
+		(case when konto = 'Orut' then 1 else 0 end * f1.t_orut +
+		case when konto = 'AttBetala' then 1 else 0 end * f1.t_attbetala +
+		case when konto = 'Moms 1' and f1.moms=1 then 1 else 0 end * -f1.t_moms +
+		case when konto = 'Moms 2' and f1.moms=2 then 1 else 0 end * -f1.t_moms +
+		case when konto = 'Moms 3' and f1.moms=3 then 1 else 0 end * -f1.t_moms )::numeric
+	,2)
+	as summa, 
+	f1.kundnr as kundnr, f1.namn as namn, f1.datum as datum, year(f1.datum) as ar, month(f1.datum) as man
+	from faktura1 f1 join (values ('Moms 1'),('Moms 2'),('Moms 3'),('AttBetala'), ('Orut')) k (konto) on 1=1
+	join fuppg on 1=1 
+	union all 
+	select case when coalesce(f2.konto,'') = '' then '3011' else f2.konto end, f2.faktnr , 'F', -sum(round(f2.summa::numeric,2)) , f1.kundnr, f1.namn, f1.datum as datum, year(f1.datum) as ar, month(f1.datum) as man
+	from faktura1 f1 join faktura2 f2 on f1.faktnr = f2.faktnr 
+	group by f1.faktnr, f2.faktnr, case when coalesce(f2.konto,'') = '' then '3011' else f2.konto end	;
+
+
+
+	--- kundstatistik
+	insert into kunstat (kundnr, ar, man, tot, tbidrag, btid, fakturor, betal, totbet, ranta)
+		select this_kundnr, year(current_date), month(current_date), 0, 0, 0, 0, 0, 0, 0 
+			from faktura1 where faktnr=this_faktnr
+								and not exists (select from kunstat where kundnr=this_kundnr and man=month(datum) and ar=year(datum));
+	update kunstat set tot=kunstat.tot + q.t_netto, tbidrag=kunstat.tbidrag + q.tb, fakturor=fakturor+1
+		from (select  t_netto, t_netto-t_innetto as tb from faktura1 f1 where faktnr=this_faktnr ) q
+	where kunstat.kundnr = this_kundnr and kunstat.ar=year(current_date) and kunstat.man=month(current_date);
+		
+
 	-- Artikelstatistik
 	insert into artstat as a (artnr, ar, man, salda, tbidrag) 
 		select artnr, year(current_date), month(current_date), 0, 0 from faktura2 f2
@@ -251,6 +293,20 @@ begin
 	insert into orderhand (ordernr, datum, tid, anvandare, handelse, nyordernr, antalkolli, totalvikt) 
 		select ordernr, current_date, current_time, in_anvandare, 'Fakturerad', 0, 0, 0 from unnest(in_orderlista) as ordernr;
 
+-- delete räntor
+	if (this_isranta ) THEN
+		delete from ranta where kundnr=this_kundnr and (''||  faktnr || betdat)  in (select ''||  rantafakturanr || rantabetaldatum from temprader where rantafakturanr is not null);
+	end if;
+
+-- update and delete bonus 
+	if (this_isbonus ) then
+		insert into bonusbet (kund, utdatum, faktura, bonus, utfaktura, id)
+			select this_kundnr, current_date, bonusfaktura, -summa, this_faktnr, bonusid  from temprader where bonusid is not null;
+		
+		delete from bonus where kundnr=this_kundnr and (''||  faktura || id)  in (select ''||  faktura || bonusid id from temprader where bonusid is not null);
+	end if;
+
+
 -- delette ordewr
 	delete from order1 where ordernr = any(in_orderlista);
 	delete from order2 where ordernr = any(in_orderlista);
@@ -262,4 +318,8 @@ $BODY$
   LANGUAGE plpgsql VOLATILE SECURITY DEFINER
   COST 100;
 
-select FAKTURERAORDER('UB', ARRAY [438750, 438751]);
+ select orderadd('UB',0, '055513915', ' Msrkningen' , array ['Q001'], array [1], array [100], array [20] )  
+
+select FAKTURERAORDER('UB', ARRAY [438753 ]) ;
+
+

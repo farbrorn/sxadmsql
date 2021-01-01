@@ -1,7 +1,6 @@
 create view v_bokord as
-select konto
-as konto, 
-f1.faktnr as faktnr, 'F' as typ, 
+
+select konto as konto,  f1.faktnr as faktnr, 'F' as typ, 
 round(
 (case when konto = 'Orut' then 1 else 0 end * f1.t_orut +
 case when konto = 'AttBetala' then 1 else 0 end * f1.t_attbetala +
@@ -12,6 +11,8 @@ case when konto = 'Moms 3' and f1.moms=3 then 1 else 0 end * -f1.t_moms )::numer
 as summa, 
 f1.kundnr as kundnr, f1.namn as namn, f1.datum as datum, year(f1.datum) as ar, month(f1.datum) as man
 from faktura1 f1 join (values ('Moms 1'),('Moms 2'),('Moms 3'),('AttBetala'), ('Orut')) k (konto) on 1=1
+
+
 union all
 select case when coalesce(f2.konto,'') = '' then '3011' else f2.konto end, f2.faktnr , 'F', -sum(round(f2.summa::numeric,2)) , f1.kundnr, f1.namn, f1.datum as datum, year(f1.datum) as ar, month(f1.datum) as man
 from faktura1 f1 join faktura2 f2 on f1.faktnr = f2.faktnr 
