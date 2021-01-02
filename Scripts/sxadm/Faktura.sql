@@ -325,5 +325,4 @@ $BODY$
   COST 100;
 
 
---select FAKTURERAORDER('UB', ARRAY [ (select ORDERFROMOFFERT('UB', 24144, 'Sparad'))  ]) ;
 

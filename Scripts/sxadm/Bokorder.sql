@@ -21,5 +21,7 @@ union all
 select case when k.typ='B' then 'Betalning ' || b.betsatt else 'Kundreskontra' end, b.faktnr, 'B', 
 round(b.bet::numeric,2) * case when k.typ='B' then 1 else -1 end as summa, 
 b.kundnr, b.namn, b.betdat, year(b.betdat), month(b.betdat)
-from betjour b join (values ('B'), ('R')) k (typ) on 1=1
+from betjour b join (values ('B'), ('R')) k (typ) on 1=1;
+
+
 
