@@ -19,4 +19,3 @@ $BODY$
   COST 100;
 
 
- select * from artikel where namn like '%NORGE%'
