@@ -318,8 +318,10 @@ $BODY$
   LANGUAGE plpgsql VOLATILE SECURITY DEFINER
   COST 100;
 
- select orderadd('UB',0, '055513915', ' Msrkningen' , array ['Q001'], array [1], array [100], array [20] )  
 
-select FAKTURERAORDER('UB', ARRAY [438753 ]) ;
+select FAKTURERAORDER('UB', ARRAY [ (select ORDERFROMOFFERT('UB', 24144, 'Sparad'))  ]) ;
+
+
+--select FAKTURERAORDER('UB', ARRAY [438753 ]) ;
 
 
