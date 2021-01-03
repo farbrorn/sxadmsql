@@ -1,0 +1,1 @@
+select * from artikel where nummer = '0020'

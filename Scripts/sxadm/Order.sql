@@ -79,18 +79,12 @@ begin
         select into this_pos coalesce(max(pos),0)+1 from order2 where ordernr=in_ordernr;
 	insert into order2 (ordernr, pos, prisnr, dellev, artnr, namn, levnr, best, lev, pris, rab, summa, konto, netto, enh, stjid)
 		select o1.ordernr, this_pos , 1, 1, a.nummer, a.namn, a.lev, in_antal , in_antal, 
-		case when in_pris is not null then in_pris else least (
-			case when kn.kundnetto_staf2>0 then  kn.kundnetto_staf2 else a.utpris end, 
-			case when kn.kundnetto_staf1>0 then  kn.kundnetto_staf1 else a.utpris end,
-			kn.kundnetto_bas
-		) end,
+		-- om ingen pris, eller 0-rabatt så ta kundnetto, men om rabatt anges medn inte pris ta då brutto
+		case when in_pris is not null then in_pris else case when coalesce(in_rab,0)<>0 then a.utpris else kn.kundnetto_bas end end,
 		coalesce(in_rab,0), 
 		
-		case when in_pris is not null then in_pris else least (
-			case when kn.kundnetto_staf2>0 then  kn.kundnetto_staf2 else a.utpris end, 
-			case when kn.kundnetto_staf1>0 then  kn.kundnetto_staf1 else a.utpris end,
-			kn.kundnetto_bas
-		) end * in_antal *(1-coalesce(in_rab,0)/100), 
+		case when in_pris is not null then in_pris else case when coalesce(in_rab,0)<>0 then a.utpris else kn.kundnetto_bas end end
+			* in_antal *(1-coalesce(in_rab,0)/100), 
 		
 		konto, a.getinnetto, enhet, 0
 		from artikel A JOIN order1 o1 on o1.ordernr=in_ordernr join kundnetto kn on kn.artnr=a.nummer and kn.kundnr=o1.kundnr 
