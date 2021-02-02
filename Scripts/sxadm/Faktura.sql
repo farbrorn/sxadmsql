@@ -32,7 +32,7 @@ begin
 	if not exists (select 1 from saljare where forkortning=in_anvandare) then raise exception 'Användare % saknas', in_anvandare; end if;
 	
 	SELECT 		max(kundnr), count(DISTINCT kundnr), count(DISTINCT lagernr), count(distinct trim(left(saljare,30))), count(distinct bonus ), 
-				count(distinct ktid), count(distinct moms), COUNT(*), sum(case when wmslock is not null or lastdatum is not null then 1 else 0 end), count(distinct order1.faktor),
+				count(distinct ktid), count(distinct moms), COUNT(*), sum(case when (select max(order2.wmslock) from order2 where order2.ordernr=order1.ordernr) is not null or lastdatum is not null then 1 else 0 end), count(distinct order1.faktor),
 				max(moms), max(lagernr), case when max(bonus) = 1 then true else false end --bonus samla (2) ska inte tas med
 		INTO 	this_kundnr, cn_kundnr, cn_lagernr, cn_saljare, cn_bonus,
 				cn_ktid, cn_moms  , cn_ordercnt, cn_lasta , cn_faktor,
@@ -130,7 +130,7 @@ end if;
 							round((trader.momspliktigt*this_momsproc/100)::numeric,2),
 							0, 0, trader.netto,
 							order1.lagernr , order1.direktlevnr , this_momsproc, null, null
-					from kund, fuppg, order1 , (select sum(summa) as summa, sum(case when momsfri then 0 else summa end) as momspliktigt, sum(netto) as netto from temprader) trader
+					from kund, fuppg, order1 , (select sum(summa) as summa, sum(case when momsfri then 0 else summa end) as momspliktigt, sum(case when coalesce(netto,0)<> 0 then coalesce(netto,0) else coalesce(pris,0)*(1-coalesce(rab,0)/100) end * lev ) as netto from temprader) trader
 					where order1.ordernr = in_orderlista[1] and kund.nummer=order1.kundnr;
 				
 

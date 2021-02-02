@@ -1,5 +1,6 @@
 --drop FUNCTION sxasOverforOrder2Offert(in_orderlista integer[])
 
+
 CREATE OR REPLACE FUNCTION sxasOverforOrder2Offert(in_orderlista integer[], out out_offertnr integer, out out_viktkg integer, out out_antalkolli integer)  AS
 $BODY$
 declare
@@ -8,7 +9,11 @@ declare
 	this_viktkg integer;
 	this_meddelande varchar;
 	this_iserror boolean;
+	this_on integer;
 begin
+	--Kolla efter dubbla order
+	select  ordernr into this_on from unnest(in_orderlista::integer[]) as ordernr group by ordernr  having count(*) > 1 limit 1;
+	if this_on > 0 then raise exception 'Ordernr % är dubbelt angiven.', this_on; end if;
 	--Kolla efter felaktiga ordrar samt räkna vikt 
 	select 
 	string_agg( ' Order ' || o.ordernr ||

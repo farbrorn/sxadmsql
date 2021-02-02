@@ -107,8 +107,6 @@ $function$
 
 
 
-
-
 CREATE OR REPLACE FUNCTION orderaddrow_noorderhand(in_anvandare character varying, in_ordernr integer, in_artnr character varying, in_antal real, in_pris real DEFAULT NULL::real, in_rab real DEFAULT NULL::real)
  RETURNS integer
  LANGUAGE plpgsql
@@ -121,6 +119,8 @@ begin
 end;
 $function$
 ;
+
+
 
 
 

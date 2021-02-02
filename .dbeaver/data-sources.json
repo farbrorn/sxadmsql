@@ -26,8 +26,7 @@
 					"postgresql.dd.plain.string": "false",
 					"postgresql.dd.tag.string": "false"
 				},
-				"auth-model": "native",
-				"handlers": {}
+				"auth-model": "native"
 			}
 		},
 		"postgres-jdbc-176a32af0f8-2eb9cb3a00d35d3c": {
@@ -55,8 +54,7 @@
 					"postgresql.dd.plain.string": "false",
 					"postgresql.dd.tag.string": "false"
 				},
-				"auth-model": "native",
-				"handlers": {}
+				"auth-model": "native"
 			}
 		},
 		"postgres-jdbc-176a32c1a66-5ebf9c9b403436ae": {
@@ -80,8 +78,7 @@
 					"postgresql.dd.plain.string": "false",
 					"postgresql.dd.tag.string": "false"
 				},
-				"auth-model": "native",
-				"handlers": {}
+				"auth-model": "native"
 			}
 		},
 		"postgres-jdbc-176a32e8c72-3f07461f7c6ee4ff": {
@@ -105,8 +102,7 @@
 					"postgresql.dd.plain.string": "false",
 					"postgresql.dd.tag.string": "false"
 				},
-				"auth-model": "native",
-				"handlers": {}
+				"auth-model": "native"
 			}
 		}
 	},
