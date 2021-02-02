@@ -1,0 +1,17 @@
+{
+	"65e820ea-ad31-4ef6-b269-8481d756c65e": {
+		"task": "pgToolDatabaseAnalyze",
+		"label": "an db",
+		"description": "",
+		"createTime": "202101030807",
+		"updateTime": "202101030807",
+		"state": {
+			"objects": [
+				{
+					"project": "sxadmsql",
+					"objectId": "postgres-jdbc-176a32c1a66-5ebf9c9b403436ae/sxadm"
+				}
+			]
+		}
+	}
+}

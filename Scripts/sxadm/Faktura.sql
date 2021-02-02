@@ -319,10 +319,9 @@ end if;
 
 
 	return this_faktnr;
-end;
+end;8
 $BODY$
   LANGUAGE plpgsql VOLATILE SECURITY DEFINER
   COST 100;
-
 
 
