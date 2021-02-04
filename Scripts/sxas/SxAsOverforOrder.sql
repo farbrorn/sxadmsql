@@ -65,7 +65,7 @@ begin
 				end 
 			else 
 				-- multiplikator för beh¨llning i ab
-				a.getinnetto + greatest(0,greatest(0,(o2.pris * (1-coalesce(o2.rab,0)/100) * valuta.kurs) - a.getinnetto)) * 0.44 
+				a.getinnetto + greatest(0,greatest(0,(o2.pris * (1-coalesce(o2.rab,0)/100) * valuta.kurs) - a.getinnetto)) * 0.3 
 			end::numeric 
 		,2) as pristillas
 	, 0, '', a.getinnetto, a.enhet

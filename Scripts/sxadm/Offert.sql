@@ -22,7 +22,7 @@ begin
 		skrivejpris
 	)
 		select this_offertnr, namn, adr1, adr2, adr3, lnamn, ladr2, ladr3,
-		saljare, ref, nummer, in_marke, current_date, case when momsfri <> 0 then 1 else 0 end, 'Sparad', ktid, bonus, faktor, null,
+		saljare, ref, nummer, in_marke, current_date, case when momsfri = 0 then 1 else 0 end, 'Sparad', ktid, bonus, faktor, null,
 		levvillkor, mottagarfrakt, fraktkundnr, fraktbolag, fraktfrigrans, in_lagernr,
 		0
 		from kund where nummer=in_kundnr;
